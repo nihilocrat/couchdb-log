@@ -40,15 +40,24 @@ except ImportError:
 
 
 class CouchDBLogHandler(logging.Handler):
+    """
+    A logging handler using CouchDB for log storage
+	
+	"""
     uuids = []
     
-    def __init__(self, dbname):
+    def __init__(self, dbname, root="http://localhost:5984/", options="batch=ok"):
+		"""
+		@param dbname: Name of the CouchDB database
+		@param root: URL pointing to the root of the CouchDB instance
+		@param options: extra options to add to the query string of requests
+		"""
         logging.Handler.__init__(self, level=logging.INFO)
-        self.dbname = dbname
-        self.dbBasePath = "http://localhost:5984/"
-        self.dbOptions = "batch=ok"
+		
+		self.dbname = dbname
+        self.dbBasePath = root
+        self.dbOptions = options
         self.dbLink = "%s/%s" % (self.dbBasePath, self.dbname)
-        #self.dbLink = "http://localhost:5984/%s/" % self.dbname
         self.bulk = False
         
         # TODO: send a test query ... if we get no reply we shouldn't even bother trying to log
@@ -62,6 +71,10 @@ class CouchDBLogHandler(logging.Handler):
             pass
     
     def getUuid(self):
+		"""
+		Get a uuid for a new CouchDB record
+		WARNING: if there is not a uuid available, a list of them will be requested from CouchDB
+		"""
         try:
             return self.uuids.pop()
         except IndexError:
@@ -91,15 +104,10 @@ class CouchDBLogHandler(logging.Handler):
         # map the record data to 
         data = {
            #"_id" : self.getUuid(),
-           #"_id": "1ebb4fe4f0cc33922626e126220001f0",
-           #"_rev": "1-02f8671970e2dbc6ba8516fcfac1cb0d",
            "doc_type": "LogMessage",
            "level": record.levelname,
            "senderName": "Python",
-           #"serverVersion": "0.1",
-           #"sessionID": 1,
            "date": logtime,
-           ##"message": record.message,
            "message" : logmessage,
            #"senderVersion": None,
            "categories": [
@@ -140,8 +148,6 @@ class CouchDBLogHandler(logging.Handler):
                     print lazyjson
                     print e.msg
                     raise
-                
-            #result = url.urlopen(self.dbLink, urlencode(data))
             
             if isinstance(result, str):
                 response = result
@@ -159,7 +165,7 @@ class CouchDBLogHandler(logging.Handler):
 
 
 if __name__ == "__main__":
-    handletest = CouchDBLogHandler("tutorial")
+    handletest = CouchDBLogHandler("tutorial", root="http://localhost:5984/", options="batch=ok")
     
     msg = """nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan nyan"""
     numRecords = 1000
